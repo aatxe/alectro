@@ -11,3 +11,5 @@ repository = "https://github.com/aatxe/alectro"
 readme = "README.md"
 
 [dependencies]
+irc = "0.12.0"
+termion = "1.4.0"
