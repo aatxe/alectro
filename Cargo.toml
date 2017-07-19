@@ -1,6 +1,13 @@
 [package]
 name = "alectro"
-version = "0.1.0"
+version = "0.0.1"
+description = "A textual IRC client. (Placeholder package)"
 authors = ["Aaron Weiss <awe@pdgn.co>"]
+license = "GPL-3.0"
+keywords = ["irc", "client", "tui", "termion"]
+categories = ["command-line-interface", "command-line-utilities"]
+documentation = "https://docs.rs/alectro/"
+repository = "https://github.com/aatxe/alectro"
+readme = "README.md"
 
 [dependencies]
