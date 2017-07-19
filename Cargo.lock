@@ -6,6 +6,7 @@ dependencies = [
  "irc 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "termion 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-core 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tokio-timer 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

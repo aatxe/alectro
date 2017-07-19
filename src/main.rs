@@ -2,17 +2,23 @@ extern crate futures;
 extern crate irc;
 extern crate termion;
 extern crate tokio_core;
+extern crate tokio_timer;
 
-use std::io::prelude::*;
+pub mod view;
+
+use view::View;
+
 use std::io;
+use std::sync::Arc;
 use std::thread;
+use std::time::Duration;
 
 use futures::sync::mpsc;
 use irc::client::prelude::*;
 use termion::event::Key;
 use termion::input::TermRead;
-use termion::raw::IntoRawMode;
 use tokio_core::reactor::Core;
+use tokio_timer as timer;
 
 fn main() {
     let mut reactor = Core::new().unwrap();
@@ -20,7 +26,6 @@ fn main() {
     let cfg = Config {
         nickname: Some(format!("aatxe")),
         server: Some(format!("irc.fyrechat.net")),
-        use_ssl: Some(true),
         channels: Some(vec![format!("#irc-crate")]),
         .. Default::default()
     };
@@ -40,15 +45,19 @@ fn main() {
         }
     });
 
-    let mut stdout = io::stdout().into_raw_mode().unwrap();
+    let mut stdout = io::stdout();
+    let view = Arc::new(View::new().unwrap());
+    let draw_view = view.clone();
 
-    write!(stdout, "{}{}{}",
-           termion::clear::All,
-           termion::cursor::Goto(1, 1),
-           termion::cursor::Hide).unwrap();
+    let _ = thread::spawn(move || {
+        loop {
+            draw_view.draw().unwrap();
+            thread::sleep_ms(50);
+        }
+    });
 
     let output_future = irc_server.stream().for_each(|message| {
-        print!("{}", message);
+        view.push(message);
         Ok(())
     });
 
@@ -64,7 +73,4 @@ fn main() {
     });
 
     reactor.run(output_future.join(input_future)).unwrap();
-
-    write!(stdout, "{}", termion::cursor::Show).unwrap();
-    stdout.flush().unwrap();
 }
