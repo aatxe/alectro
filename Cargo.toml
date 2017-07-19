@@ -1,7 +1,7 @@
 [package]
 name = "alectro"
 version = "0.0.1"
-description = "A textual IRC client. (Placeholder package)"
+description = "A textual IRC client."
 authors = ["Aaron Weiss <awe@pdgn.co>"]
 license = "GPL-3.0"
 keywords = ["irc", "client", "tui", "termion"]
