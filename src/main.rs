@@ -62,7 +62,7 @@ fn main() {
 
     let input_future = keys_rx.map_err(|()| unreachable!()).for_each(|key| {
         match key {
-            Key::Ctrl('c') => {
+            Key::Ctrl('c') | Key::Ctrl('d') => {
                 irc_server.send_quit("QUIT")?;
             }
             _ => (),
@@ -73,8 +73,6 @@ fn main() {
 
     reactor.run(output_future.join(input_future)).unwrap();
 
-    write!(stdout, "{}{}{}",
-        termion::clear::All, termion::style::Reset, termion::cursor::Goto(1, 1)
-    ).unwrap();
+    write!(stdout, "{}", termion::style::Reset).unwrap();
     stdout.flush().unwrap();
 }

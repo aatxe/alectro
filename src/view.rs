@@ -6,9 +6,7 @@ use std::sync::Mutex;
 
 use irc::proto::{Command, Message};
 use termion;
-use termion::{color, cursor, style};
-use termion::cursor::DetectCursorPos;
-use termion::input::MouseTerminal;
+use termion::{color, cursor};
 use termion::raw::{IntoRawMode, RawTerminal};
 use termion::screen::AlternateScreen;
 
@@ -49,7 +47,7 @@ impl View {
 
         let mut stdout = stdout();
 
-        write!(stdout, "{}{}", termion::clear::All, cursor::Goto(1, self.lines()))?;
+        write!(stdout, "{}{}", termion::clear::All, cursor::Goto(1, self.lines() - 1))?;
         for msg in &to_draw {
             msg.draw()?;
             write!(stdout, "{}\r", cursor::Up(1))?;
