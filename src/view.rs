@@ -15,7 +15,17 @@ use termion::screen::AlternateScreen;
 pub struct View {
     buffer: Mutex<Vec<Message>>,
     // _stdout: MouseTerminal<RawTerminal<Stdout>>,
-    _stdout: MouseTerminal<AlternateScreen<RawTerminal<Stdout>>>,
+    // _stdout: MouseTerminal<AlternateScreen<RawTerminal<Stdout>>>,
+    _stdout: AlternateScreen<RawTerminal<Stdout>>,
+}
+
+impl Drop for View {
+    fn drop(&mut self) {
+        write!(self._stdout, "{}{}{}",
+               termion::clear::All, termion::style::Reset, termion::cursor::Goto(1, 1)
+        ).unwrap();
+        self._stdout.flush().unwrap();
+    }
 }
 
 impl View {
@@ -23,7 +33,8 @@ impl View {
         Ok(View {
             buffer: Mutex::new(vec![]),
             // _stdout: MouseTerminal::from(stdout().into_raw_mode()?),
-            _stdout: MouseTerminal::from(AlternateScreen::from(stdout().into_raw_mode()?)),
+            // _stdout: MouseTerminal::from(AlternateScreen::from(stdout().into_raw_mode()?)),
+            _stdout: AlternateScreen::from(stdout().into_raw_mode()?),
         })
     }
 
@@ -49,10 +60,6 @@ impl View {
 
     fn lines(&self) -> u16 {
         termion::terminal_size().unwrap_or((0, 0)).1
-    }
-
-    fn columns(&self) -> u16 {
-        termion::terminal_size().unwrap_or((0, 0)).0
     }
 }
 

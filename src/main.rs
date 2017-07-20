@@ -2,13 +2,13 @@ extern crate futures;
 extern crate irc;
 extern crate termion;
 extern crate tokio_core;
-extern crate tokio_timer;
 
 pub mod view;
 
 use view::View;
 
 use std::io;
+use std::io::Write;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
@@ -18,7 +18,6 @@ use irc::client::prelude::*;
 use termion::event::Key;
 use termion::input::TermRead;
 use tokio_core::reactor::Core;
-use tokio_timer as timer;
 
 fn main() {
     let mut reactor = Core::new().unwrap();
@@ -52,7 +51,7 @@ fn main() {
     let _ = thread::spawn(move || {
         loop {
             draw_view.draw().unwrap();
-            thread::sleep_ms(50);
+            thread::sleep(Duration::from_millis(50));
         }
     });
 
@@ -63,7 +62,7 @@ fn main() {
 
     let input_future = keys_rx.map_err(|()| unreachable!()).for_each(|key| {
         match key {
-            Key::Char('q') => {
+            Key::Ctrl('c') => {
                 irc_server.send_quit("QUIT")?;
             }
             _ => (),
@@ -73,4 +72,9 @@ fn main() {
     });
 
     reactor.run(output_future.join(input_future)).unwrap();
+
+    write!(stdout, "{}{}{}",
+        termion::clear::All, termion::style::Reset, termion::cursor::Goto(1, 1)
+    ).unwrap();
+    stdout.flush().unwrap();
 }
