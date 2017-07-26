@@ -5,4 +5,4 @@ A textual IRC client in Rust.
 
 ## Acknowledgements ## 
 
-* In its current state, a lot of the UI code is derived from [tui-rs](https://github.com/fdehau/tui-rs) by @fdehau.
+* In its current state, a lot of the UI code is derived from [tui-rs](https://github.com/fdehau/tui-rs) by [Florian Dehau](http://fdehau.com).
