@@ -2,10 +2,13 @@
 name = "alectro"
 version = "0.0.1"
 dependencies = [
+ "error-chain 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "irc 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "termion 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-core 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unicode-segmentation 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unicode-width 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -584,6 +587,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "unicode-segmentation"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "unicode-width"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "unicode-xid"
 version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -676,6 +689,8 @@ dependencies = [
 "checksum tokio-mockstream 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "41bfc436ef8b7f60c19adf3df086330ae9992385e4d8c53b17a323cad288e155"
 "checksum tokio-timer 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6131e780037787ff1b3f8aad9da83bca02438b72277850dd6ad0d455e0e20efc"
 "checksum tokio-tls 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "d88e411cac1c87e405e4090be004493c5d8072a370661033b1a64ea205ec2e13"
+"checksum unicode-segmentation 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "c3bc443ded17b11305ffffe6b37e2076f328a5a8cb6aa877b1b98f77699e98b5"
+"checksum unicode-width 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "bf3a113775714a22dcb774d8ea3655c53a32debae63a063acc00a91cc586245f"
 "checksum unicode-xid 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "8c1f860d7d29cf02cb2f3f359fd35991af3d30bac52c57d265a3c461074cb4dc"
 "checksum winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "167dc9d6949a9b857f3451275e911c3f44255842c1f7a76f33c55103a909087a"
 "checksum winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2d315eee3b34aca4797b2da6b13ed88266e6d612562a0c46390af8299fc699bc"
