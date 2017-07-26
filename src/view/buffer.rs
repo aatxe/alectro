@@ -83,55 +83,48 @@ impl Buffer {
         }
     }
 
+    /// Merge the given buffer onto this one.
     pub fn merge(&mut self, other: &Buffer) {
+        let bound = self.bound.union(&other.bound);
+
+        // Add any additional cells necessary with the default cell value.
+        self.buf.resize(bound.area() as usize, Cell::default());
+
+        // Move original buf contents to the appropriate cell.
+        let offset_x = self.bound.x - bound.x;
+        let offset_y = self.bound.y - bound.y;
         let size = self.bound.area() as usize;
-        for i in 0..size {
-            self.buf[i] = other.buf[i].clone();
+        for i in (0..size).rev() {
+            let (x, y) = self.pos_of(i);
+            let new_idx = ((y + offset_y) * bound.width + (x + offset_x)) as usize;
+
+            // Move the contents around if necessary.
+            if i != new_idx {
+                self.buf[i] = Cell::default();
+                self.buf.swap(new_idx, i);
+            }
         }
+
+        // Push contents of the other buffer into this one, erasing any already present cells.
+        let offset_x = other.bound.x - bound.x;
+        let offset_y = other.bound.y - bound.y;
+        let size = other.bound.area() as usize;
+        for i in 0..size {
+            let (x, y) = other.pos_of(i);
+            let new_idx = ((y + offset_y) * bound.width + (x + offset_x)) as usize;
+            self.buf[new_idx] = other.buf[i].clone();
+        }
+
+        self.bound = bound;
     }
 
-    // /// Merge the given buffer onto this one.
-    // pub fn merge(&mut self, other: &Buffer) {
-    //     let bound = self.bound.union(&other.bound);
-
-    //     // Add any additional cells necessary with the default cell value.
-    //     self.buf.resize(bound.area() as usize, Cell::default());
-
-    //     // Move original buf contents to the appropriate cell.
-    //     let offset_x = self.bound.x - bound.x;
-    //     let offset_y = self.bound.y - bound.y;
-    //     let size = self.bound.area() as usize;
-    //     for i in (0..size).rev() {
-    //         let (x, y) = self.pos_of(i);
-    //         let new_idx = ((y + offset_y) * bound.width + (x + offset_x)) as usize;
-
-    //         // Move the contents around if necessary.
-    //         if i != new_idx {
-    //             self.buf[new_idx] = Cell::default();
-    //             self.buf.swap(new_idx, i);
-    //         }
-    //     }
-
-    //     // Push contents of the other buffer into this one, erasing any already present cells.
-    //     let offset_x = other.bound.x - bound.x;
-    //     let offset_y = other.bound.y - bound.y;
-    //     let size = other.bound.area() as usize;
-    //     for i in 0..size {
-    //         let (x, y) = other.pos_of(i);
-    //         let new_idx = ((y + offset_y) * bound.width + (x + offset_x)) as usize;
-    //         self.buf[new_idx] = other.buf[i].clone();
-    //     }
-
-    //     self.bound = bound;
-    // }
-
     pub fn pos_of(&self, i: usize) -> (u16, u16) {
-        debug_assert!(
-            i >= self.buf.len(),
-            "Attempted to determine coordinates of a position outside the buffer: i={} len={}",
-            i,
-            self.buf.len()
-        );
+        // debug_assert!(
+        //     i >= self.buf.len(),
+        //     "Attempted to determine coordinates of a position outside the buffer: i={} len={}",
+        //     i,
+        //     self.buf.len()
+        // );
 
         (self.bound.x + i as u16 % self.bound.width, self.bound.y + i as u16 / self.bound.width)
     }
