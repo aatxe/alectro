@@ -48,6 +48,10 @@ impl Buffer {
         }
     }
 
+    pub fn bound(&self) -> &Bound {
+        &self.bound
+    }
+
     pub fn height(&self) -> u16 {
         self.bound.height
     }
@@ -65,6 +69,16 @@ impl Buffer {
         self.buf[idx] = Cell::new(c);
     }
 
+    pub fn resize(&mut self, bound: Bound) {
+        let size = bound.area() as usize;
+        if self.buf.len() > size {
+            self.buf.truncate(size)
+        } else {
+            self.buf.resize(size, Cell::default())
+        }
+        self.bound = bound;
+    }
+
     pub fn drop_top_line(&mut self) {
         for _ in 0..self.bound.width {
             self.buf.pop_front();
@@ -75,7 +89,7 @@ impl Buffer {
     pub fn inner(&self) -> &VecDeque<Cell> {
         &self.buf
     }
-     
+
     /// Resets all cells in the buffer.
     pub fn reset(&mut self) {
         for c in &mut self.buf {
@@ -106,12 +120,10 @@ impl Buffer {
         }
 
         // Push contents of the other buffer into this one, erasing any already present cells.
-        let offset_x = other.bound.x - bound.x;
-        let offset_y = other.bound.y - bound.y;
         let size = other.bound.area() as usize;
         for i in 0..size {
             let (x, y) = other.pos_of(i);
-            let new_idx = ((y + offset_y) * bound.width + (x + offset_x)) as usize;
+            let new_idx = self.index_of(x, y);
             self.buf[new_idx] = other.buf[i].clone();
         }
 
@@ -119,12 +131,12 @@ impl Buffer {
     }
 
     pub fn pos_of(&self, i: usize) -> (u16, u16) {
-        // debug_assert!(
-        //     i >= self.buf.len(),
-        //     "Attempted to determine coordinates of a position outside the buffer: i={} len={}",
-        //     i,
-        //     self.buf.len()
-        // );
+        debug_assert!(
+            i < self.buf.len(),
+            "Attempted to determine coordinates of a position outside the buffer: i={} len={}",
+            i,
+            self.buf.len()
+        );
 
         (self.bound.x + i as u16 % self.bound.width, self.bound.y + i as u16 / self.bound.width)
     }

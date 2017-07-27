@@ -5,13 +5,14 @@ extern crate termion;
 extern crate tokio_core;
 
 use std::io;
+use std::io::Write;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
 use alectro::view::Terminal;
-use alectro::view::widget::ChatBuf;
+use alectro::view::widget::{ChatBuf, Input};
 use futures::sync::mpsc;
 use irc::client::prelude::*;
 use termion::event::Key;
@@ -35,9 +36,9 @@ fn main() {
     let (keys_tx, keys_rx) = mpsc::unbounded();
     let _ = thread::spawn(move || {
         let stdin = io::stdin();
-        let mut input = stdin.keys();
+        let input = stdin.keys();
 
-        for res_key in input.next() {
+        for res_key in input {
             if let Ok(key) = res_key {
                 keys_tx.send(key).unwrap();
             }
@@ -47,17 +48,27 @@ fn main() {
     let buffer = {
         let mut buf = term.current_buf().clone();
         buf.reset();
+        let new_bound = buf.bound().minus_height(2);
+        buf.resize(new_bound);
         buf
     };
-    let chat_buf = Arc::new(Mutex::new(ChatBuf::from_buffer(buffer)));
+    let chat_buf = Arc::new(Mutex::new(ChatBuf::from_buffer(buffer.clone())));
     let draw_chat_buf = chat_buf.clone();
+    let input = Arc::new(Mutex::new(Input::from_buffer(buffer)));
+    let draw_input = input.clone();
 
     let _ = thread::spawn(move || {
         loop {
             term.render(
                 draw_chat_buf.lock().unwrap().deref()
             );
+            let inpt = draw_input.lock().unwrap();
+            term.render(
+                inpt.deref()
+            );
             term.draw().unwrap();
+            inpt.set_cursor().unwrap();
+            io::stdout().flush().unwrap();
             thread::sleep(Duration::from_millis(50));
         }
     });
@@ -92,6 +103,21 @@ fn main() {
         match key {
             Key::Ctrl('c') | Key::Ctrl('d') | Key::Ctrl('q') => {
                 irc_server.send_quit("QUIT")?;
+                panic!("User quit."); // This is a terrible way to exit.
+            }
+            Key::Char('\n') => {
+                let mut inpt = input.lock().unwrap();
+                irc_server.send_privmsg("#irc-crate", inpt.get_content())?;
+                chat_buf.lock().unwrap().push_line(
+                    &format!("{}: {}", irc_server.config().nickname(), inpt.get_content())
+                );
+                inpt.reset();
+            }
+            Key::Char(c) => {
+                input.lock().unwrap().add_char(c);
+            }
+            Key::Backspace => {
+                input.lock().unwrap().backspace();
             }
             _ => (),
         }

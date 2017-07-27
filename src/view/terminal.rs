@@ -4,7 +4,7 @@ use std::io::{Stdout, Write};
 use termion;
 use termion::cursor;
 use termion::raw::{IntoRawMode, RawTerminal};
-use termion::screen::AlternateScreen;
+use termion::screen::{AlternateScreen, ToAlternateScreen, ToMainScreen};
 
 use view::{Bound, Buffer, Widget};
 
@@ -14,14 +14,22 @@ pub struct Terminal {
     stdout: AlternateScreen<RawTerminal<Stdout>>,
 }
 
+impl Drop for Terminal {
+    fn drop(&mut self) {
+        write!(self.stdout, "{}", ToMainScreen).unwrap();
+    }
+}
+
 impl Terminal {
     pub fn new() -> io::Result<Terminal> {
         let (width, height) = termion::terminal_size()?;
         let term_bound = Bound::new(0, 0, width, height);
+        let mut stdout = AlternateScreen::from(io::stdout().into_raw_mode()?);
+        write!(stdout, "{}", ToAlternateScreen)?;
         Ok(Terminal {
             buf_index: 0,
             buffers: [Buffer::empty(term_bound), Buffer::empty(term_bound)],
-            stdout: AlternateScreen::from(io::stdout().into_raw_mode()?)
+            stdout: stdout,
         })
     }
 

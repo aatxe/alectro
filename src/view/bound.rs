@@ -39,6 +39,24 @@ impl Bound {
         self.y + self.height
     }
 
+    pub fn minus_width(&self, amount: u16) -> Bound {
+        Bound {
+            x: self.x,
+            y: self.y,
+            width: self.width - amount,
+            height: self.height,
+        }
+    }
+
+    pub fn minus_height(&self, amount: u16) -> Bound {
+        Bound {
+            x: self.x,
+            y: self.y,
+            width: self.width,
+            height: self.height - amount,
+        }
+    }
+
     pub fn union(&self, other: &Bound) -> Bound {
         let x1 = cmp::min(self.x, other.x);
         let y1 = cmp::min(self.y, other.y);
