@@ -119,6 +119,12 @@ fn main() {
             Key::Backspace => {
                 input.lock().unwrap().backspace();
             }
+            Key::Left => {
+                input.lock().unwrap().move_left();
+            }
+            Key::Right => {
+                input.lock().unwrap().move_right();
+            }
             _ => (),
         }
 

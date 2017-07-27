@@ -1,5 +1,8 @@
 use std::collections::VecDeque;
 
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
+
 use view::Bound;
 
 /// A single cell in the terminal buffer.
@@ -41,7 +44,7 @@ impl Buffer {
                 let mut vec = VecDeque::with_capacity(size);
                 for _ in 0..size {
                     vec.push_back(Cell::default())
-                } 
+                }
                 vec
             },
             bound: bound,
@@ -67,6 +70,16 @@ impl Buffer {
     pub fn set(&mut self, x: u16, y: u16, c: &str) {
         let idx = self.index_of(x, y);
         self.buf[idx] = Cell::new(c);
+    }
+
+    /// Sets the cells starting at (x, y) to string s without performing wrapping.
+    pub fn set_str(&mut self, mut x: u16, y: u16, s: &str) {
+        let graphemes = UnicodeSegmentation::graphemes(s, true);
+
+        for g in graphemes {
+            self.set(x, y, g);
+            x += g.width() as u16;
+        }
     }
 
     pub fn resize(&mut self, bound: Bound) {

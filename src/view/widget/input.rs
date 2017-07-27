@@ -35,23 +35,48 @@ impl Input {
     }
 
     pub fn add_char(&mut self, c: char) {
-        self.string.push(c);
+        let cursor = self.cursor as usize;
         let (x, y) = (self.cursor, self.buf.bound().y);
-        self.buf.set(x, y, &c.to_string());
+        if cursor == self.string.len() {
+            self.string.push(c);
+            self.buf.set(x, y, &c.to_string());
+        } else {
+            self.string.insert(cursor, c);
+            self.buf.set_str(x, y, &self.string[cursor..]);
+        }
         self.cursor += 1;
     }
 
     pub fn backspace(&mut self) {
-        // Remove the character from the internal string buffer.
-        let len = self.string.len() - 1;
-        self.string.truncate(len);
-
         // Move the cursor back one spot.
         self.cursor -= 1;
 
-        // Set the character to a blank on the visual buffer.
-        let (x, y) = (self.cursor, self.buf.bound().y);
-        self.buf.set(x, y, &" ".to_owned());
+        // Remove the character from the internal string buffer.
+        self.string.remove(self.cursor as usize);
+
+        let cursor = self.cursor as usize;
+        if cursor == self.string.len() {
+            // Set the character to a blank on the visual buffer.
+            let (x, y) = (self.cursor, self.buf.bound().y);
+            self.buf.set(x, y, &" ".to_owned());
+        } else {
+            // Redraw the the whole visual buffer.
+            self.buf.reset();
+            let y = self.buf.bound().y;
+            self.buf.set_str(0, y, &self.string);
+        }
+    }
+
+    pub fn move_left(&mut self) {
+        if self.cursor > 0 {
+            self.cursor -= 1;
+        }
+    }
+
+    pub fn move_right(&mut self) {
+        if (self.cursor as usize) < self.string.len() {
+            self.cursor += 1;
+        }
     }
 
     pub fn set_cursor(&self) -> io::Result<()> {
