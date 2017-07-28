@@ -4,8 +4,9 @@ use std::io::{Stdout, Write};
 use termion;
 use termion::cursor;
 use termion::raw::{IntoRawMode, RawTerminal};
-use termion::screen::{AlternateScreen, ToAlternateScreen, ToMainScreen};
+use termion::screen::AlternateScreen;
 
+use error;
 use view::{Bound, Buffer, Widget};
 
 pub struct Terminal {
@@ -14,22 +15,15 @@ pub struct Terminal {
     stdout: AlternateScreen<RawTerminal<Stdout>>,
 }
 
-impl Drop for Terminal {
-    fn drop(&mut self) {
-        write!(self.stdout, "{}", ToMainScreen).unwrap();
-    }
-}
-
 impl Terminal {
-    pub fn new() -> io::Result<Terminal> {
+    pub fn new() -> error::Result<Terminal> {
         let (width, height) = termion::terminal_size()?;
         let term_bound = Bound::new(0, 0, width, height);
-        let mut stdout = AlternateScreen::from(io::stdout().into_raw_mode()?);
-        write!(stdout, "{}", ToAlternateScreen)?;
+
         Ok(Terminal {
             buf_index: 0,
             buffers: [Buffer::empty(term_bound), Buffer::empty(term_bound)],
-            stdout: stdout,
+            stdout: AlternateScreen::from(io::stdout().into_raw_mode()?),
         })
     }
 
@@ -37,7 +31,7 @@ impl Terminal {
         widget.draw(&mut self.buffers[self.buf_index]);
     }
 
-    pub fn draw(&mut self) -> io::Result<()> {
+    pub fn draw(&mut self) -> error::Result<()> {
         let width = self.current_buf().width();
 
         // Draw the changes from the buffer.
