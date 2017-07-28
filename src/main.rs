@@ -4,9 +4,6 @@ extern crate irc;
 extern crate termion;
 extern crate tokio_core;
 
-use std::thread;
-use std::time::Duration;
-
 use alectro::controller::{InputController, IrcController};
 use alectro::input::AsyncKeyInput;
 use alectro::view::UI;
