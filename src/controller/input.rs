@@ -17,6 +17,10 @@ impl InputController {
         }
     }
 
+    pub fn ui(&self) -> &UI {
+        &self.ui
+    }
+
     pub fn handle_event(&self, event: Event) -> error::Result<()> {
         if let Event::Key(key) = event {
             match key {
