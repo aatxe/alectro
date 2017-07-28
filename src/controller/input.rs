@@ -26,7 +26,7 @@ impl InputController {
             match key {
                 Key::Ctrl('c') | Key::Ctrl('d') | Key::Ctrl('q') => {
                     self.irc_server.send_quit("QUIT")?;
-                    panic!("User quit."); // This is a terrible way to exit.
+                    bail!(error::ErrorKind::UserQuit);
                 }
                 Key::Char('\n') => {
                     let mut input = self.ui.input().unwrap();

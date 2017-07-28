@@ -17,5 +17,9 @@ error_chain! {
             description("Failed to acquire lock because it was poisoned.")
             display("Failed to acquire lock {} because it was poisoned.", s)
         }
+        UserQuit {
+            description("The user requested to quit the program.")
+            display("The user requested to quit the program.")
+        }
     }
 }
