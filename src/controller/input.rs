@@ -24,7 +24,7 @@ impl InputController {
     pub fn handle_event(&self, event: Event) -> error::Result<()> {
         if let Event::Key(key) = event {
             match key {
-                Key::Ctrl('c') | Key::Ctrl('d') | Key::Ctrl('q') => {
+                Key::Ctrl('c') | Key::Ctrl('d') => {
                     self.irc_server.send_quit("QUIT")?;
                     bail!(error::ErrorKind::UserQuit);
                 }
