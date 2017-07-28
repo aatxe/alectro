@@ -125,6 +125,12 @@ fn main() {
             Key::Right => {
                 input.lock().unwrap().move_right();
             }
+            Key::Up => {
+                input.lock().unwrap().move_up();
+            }
+            Key::Down => {
+                input.lock().unwrap().move_down();
+            }
             _ => (),
         }
 
