@@ -7,10 +7,10 @@ extern crate tokio_core;
 use std::thread;
 use std::time::Duration;
 
+use alectro::controller::InputController;
 use alectro::input::AsyncKeyInput;
 use alectro::view::UI;
 use irc::client::prelude::*;
-use termion::event::{Event, Key};
 use tokio_core::reactor::Core;
 
 fn main() {
@@ -62,47 +62,9 @@ fn main() {
         Ok(())
     });
 
+    let input_controller = InputController::new(irc_server, ui.clone());
     let input_rx = AsyncKeyInput::new();
-
-    let input_future = input_rx.for_each(|event| {
-        if let Event::Key(key) = event {
-            match key {
-                Key::Ctrl('c') | Key::Ctrl('d') | Key::Ctrl('q') => {
-                    irc_server.send_quit("QUIT")?;
-                    panic!("User quit."); // This is a terrible way to exit.
-                }
-                Key::Char('\n') => {
-                    let mut input = ui.input().unwrap();
-                    irc_server.send_privmsg("#irc-crate", input.get_content())?;
-                    ui.chat_buf().unwrap().push_line(
-                        &format!("{}: {}", irc_server.config().nickname(), input.get_content())
-                    );
-                    input.reset();
-                }
-                Key::Char(c) => {
-                    ui.input().unwrap().add_char(c);
-                }
-                Key::Backspace => {
-                    ui.input().unwrap().backspace();
-                }
-                Key::Left => {
-                    ui.input().unwrap().move_left();
-                }
-                Key::Right => {
-                    ui.input().unwrap().move_right();
-                }
-                Key::Up => {
-                    ui.input().unwrap().move_up();
-                }
-                Key::Down => {
-                    ui.input().unwrap().move_down();
-                }
-                _ => (),
-            }
-        }
-
-        Ok(())
-    });
+    let input_future = input_rx.for_each(|event| input_controller.handle_event(event));
 
     reactor.run(output_future.join(input_future)).unwrap();
 }
