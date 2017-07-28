@@ -14,5 +14,6 @@ extern crate error_chain;
 
 pub mod controller;
 mod error;
+pub mod input;
 pub mod model;
 pub mod view;
