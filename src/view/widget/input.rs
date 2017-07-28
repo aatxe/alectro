@@ -100,7 +100,7 @@ impl Input {
         }
     }
 
-    pub fn set_cursor(&self) -> io::Result<()> {
+    pub fn draw_cursor(&self) -> io::Result<()> {
         write!(io::stdout(), "{}", cursor::Goto(self.cursor + 1, self.buf.bound().y + 1))
     }
 
