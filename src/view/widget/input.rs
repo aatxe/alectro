@@ -3,6 +3,7 @@ use std::io::Write;
 
 use termion::cursor;
 
+use error;
 use view::{Bound, Buffer, Widget};
 
 pub struct Input {
@@ -100,8 +101,9 @@ impl Input {
         }
     }
 
-    pub fn draw_cursor(&self) -> io::Result<()> {
-        write!(io::stdout(), "{}", cursor::Goto(self.cursor + 1, self.buf.bound().y + 1))
+    pub fn draw_cursor(&self) -> error::Result<()> {
+        write!(io::stdout(), "{}", cursor::Goto(self.cursor + 1, self.buf.bound().y + 1))?;
+        Ok(())
     }
 
     /// This should be called at the beginning of any buffer-editing functions.
