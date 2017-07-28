@@ -33,13 +33,13 @@ impl AsyncKeyInput {
                 match res_key {
                     Ok(key) => {
                         if let Err(e) = tx.send(key) {
-                            return Err(e.into())
+                            bail!(e)
                         }
                     }
                     Err(e) => {
                         println!("{:?}", e);
                         if let Err(e) = tx.close() {
-                            return Err(e.into())
+                            bail!(e)
                         }
                         closed_handle.store(true, Ordering::SeqCst);
                         break;
