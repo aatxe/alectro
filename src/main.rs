@@ -14,10 +14,8 @@ use std::time::Duration;
 use alectro::input::AsyncKeyInput;
 use alectro::view::Terminal;
 use alectro::view::widget::{ChatBuf, Input};
-use futures::sync::mpsc;
 use irc::client::prelude::*;
 use termion::event::{Event, Key};
-use termion::input::TermRead;
 use tokio_core::reactor::Core;
 
 fn main() {
