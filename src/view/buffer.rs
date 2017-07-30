@@ -3,12 +3,13 @@ use std::collections::VecDeque;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-use view::Bound;
+use view::{Bound, Color, Modifier, Style};
 
 /// A single cell in the terminal buffer.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Cell {
     pub grapheme: String,
+    pub style: Style,
 }
 
 impl Default for Cell {
@@ -21,11 +22,34 @@ impl Cell {
     fn new(grapheme: &str) -> Cell {
         Cell {
             grapheme: grapheme.to_owned(),
+            style: Style::default(),
         }
     }
 
+    fn fg(&mut self, color: Color) -> &mut Cell {
+        self.style.fg = color;
+        self
+    }
+
+    fn bg(&mut self, color: Color) -> &mut Cell {
+        self.style.bg = color;
+        self
+    }
+
+    fn modifier(&mut self, modifier: Modifier) -> &mut Cell {
+        self.style.modifier = modifier;
+        self
+    }
+
+    fn styled(&mut self, style: Style) -> &mut Cell {
+        self.style = style;
+        self
+    }
+
     fn reset(&mut self) {
-        self.grapheme = " ".to_owned();
+        self.grapheme.clear();
+        self.grapheme.push(' ');
+        self.style.reset();
     }
 }
 
@@ -72,12 +96,45 @@ impl Buffer {
         self.buf[idx] = Cell::new(c);
     }
 
+    pub fn set_fg(&mut self, x: u16, y: u16, color: Color) {
+        let idx = self.index_of(x, y);
+        self.buf[idx].fg(color);
+    }
+
+    pub fn set_bg(&mut self, x: u16, y: u16, color: Color) {
+        let idx = self.index_of(x, y);
+        self.buf[idx].bg(color);
+    }
+
+    pub fn set_modifier(&mut self, x: u16, y: u16, modifier: Modifier) {
+        let idx = self.index_of(x, y);
+        self.buf[idx].modifier(modifier);
+    }
+
+    pub fn set_style(&mut self, x: u16, y: u16, style: Style) {
+        let idx = self.index_of(x, y);
+        self.buf[idx].styled(style);
+    }
+
     /// Sets the cells starting at (x, y) to string s without performing wrapping.
-    pub fn set_str(&mut self, mut x: u16, y: u16, s: &str) {
+    pub fn set_str(&mut self, x: u16, y: u16, s: &str) {
+        self.set_str_impl(x, y, s, None)
+    }
+
+    /// Sets the cells starting at (x, y) to string s without performing wrapping and using the
+    /// style provided.
+    pub fn set_str_styled(&mut self, x: u16, y: u16, s: &str, style: Style) {
+        self.set_str_impl(x, y, s, Some(style))
+    }
+
+    fn set_str_impl(&mut self, mut x: u16, y: u16, s: &str, style: Option<Style>) {
         let graphemes = UnicodeSegmentation::graphemes(s, true);
 
         for g in graphemes {
             self.set(x, y, g);
+            if let Some(style) = style {
+                self.set_style(x, y, style);
+            }
             x += g.width() as u16;
         }
     }

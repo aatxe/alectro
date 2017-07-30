@@ -1,7 +1,7 @@
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-use view::{Buffer, Widget};
+use view::{Buffer, Style, Widget};
 
 pub struct ChatBuf {
     buf: Buffer,
@@ -18,7 +18,7 @@ impl ChatBuf {
         }
     }
 
-    pub fn push_line(&mut self, line: &str) {
+    pub fn push_line(&mut self, line: &str, style: Option<Style>) {
         let graphemes = UnicodeSegmentation::graphemes(line, true);
 
         let mut x = self.starting_x;
@@ -44,8 +44,11 @@ impl ChatBuf {
                 y -= 1;
             }
 
-            // Set the cell to this grapheme, and moves the pointer.
+            // Set the cell to this grapheme, set the style, and moves the pointer.
             self.buf.set(x, y, g);
+            if let Some(style) = style {
+                self.buf.set_style(x, y, style);
+            }
             x += g.width() as u16;
         }
 

@@ -35,7 +35,9 @@ impl InputController {
                         &format!(
                             "{}: {}",
                             self.irc_server.config().nickname(),
-                            input.get_content())
+                            input.get_content()
+                        ),
+                        None,
                     );
                     input.reset();
                 }

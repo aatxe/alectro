@@ -7,7 +7,7 @@ use termion::raw::{IntoRawMode, RawTerminal};
 use termion::screen::AlternateScreen;
 
 use error;
-use view::{Bound, Buffer, Widget};
+use view::{Bound, Buffer, Color, Modifier, Style, Widget};
 
 pub struct Terminal {
     buf_index: usize,
@@ -51,6 +51,7 @@ impl Terminal {
                     None
                 });
             buf = String::with_capacity(changed.size_hint().0 * 3);
+            let mut style = Style::default();
             let mut last_y = 0;
             let mut last_x = 0;
             for (x, y, cell) in changed {
@@ -59,10 +60,35 @@ impl Terminal {
                 }
                 last_x = x;
                 last_y = y;
+                if cell.style.modifier != style.modifier {
+                    buf.push_str(&cell.style.modifier.to_string());
+                    style.modifier = cell.style.modifier;
+                    if style.modifier == Modifier::Reset {
+                        style.bg = Color::Reset;
+                        style.fg = Color::Reset;
+                    }
+                }
+                if cell.style.fg != style.fg {
+                    buf.push_str(&cell.style.fg.to_fg_string());
+                    style.fg = cell.style.fg;
+                }
+                if cell.style.bg != style.bg {
+                    buf.push_str(&cell.style.bg.to_bg_string());
+                    style.bg = cell.style.bg;
+                }
                 buf.push_str(&cell.grapheme)
             }
         }
-        write!(self.stdout, "{}", buf)?;
+
+        /// Write out the computed buffer.
+        write!(
+            self.stdout,
+            "{}{}{}{}",
+            buf,
+            Color::Reset.to_fg_string(),
+            Color::Reset.to_bg_string(),
+            Modifier::Reset.to_string(),
+        )?;
 
         // Swap to the other buffer.
         self.swap();
