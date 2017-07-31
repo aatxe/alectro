@@ -30,7 +30,7 @@ impl InputController {
                 }
                 Key::Char('\n') => {
                     let mut input = self.ui.input().unwrap();
-                    self.irc_server.send_privmsg("#irc-crate", input.get_content())?;
+                    self.irc_server.send_privmsg("#pdgn", input.get_content())?;
                     self.ui.chat_buf()?.push_line(
                         &format!(
                             "{}: {}",

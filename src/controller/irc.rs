@@ -36,7 +36,7 @@ impl IrcController {
                         None => format!("{}", msg),
                     },
                     Some(Style {
-                        fg: Color::Black,
+                        fg: Color::LightWhite,
                         bg: Color::Yellow,
                         ..Style::default()
                     }),

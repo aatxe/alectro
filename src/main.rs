@@ -15,9 +15,10 @@ fn main() {
     let mut reactor = Core::new().unwrap();
 
     let cfg = Config {
-        nickname: Some(format!("aatxe")),
-        server: Some(format!("irc.fyrechat.net")),
-        channels: Some(vec![format!("#irc-crate")]),
+        nickname: Some(format!("alectro")),
+        server: Some(format!("irc.pdgn.co")),
+        channels: Some(vec![format!("#pdgn")]),
+        use_ssl: Some(true),
         .. Default::default()
     };
     let irc_server = IrcServer::from_config(cfg).unwrap();
