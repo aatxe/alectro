@@ -2,10 +2,11 @@ use termion;
 use termion::color::{Fg, Bg};
 
 macro_rules! make_color {
-    ($(#[$attr:meta] $variant:ident),+) => {
+    ($(#[$attr:meta] $variant:ident = $value:expr),+) => {
         #[derive(Debug, Clone, Copy, Eq, PartialEq)]
+        #[repr(u8)]
         pub enum Color {
-            $(#[$attr] $variant),+
+            $(#[$attr] $variant = $value),+
         }
 
         impl Color {
@@ -20,45 +21,52 @@ macro_rules! make_color {
                     $(Color::$variant => format!("{}", Bg(termion::color::$variant))),+
                 }
             }
+
+            pub fn from_u8(val: u8) -> Option<Color> {
+                match val {
+                    $($value => Some(Color::$variant),)+
+                        _ => None
+                }
+            }
         }
     }
 }
 
 make_color! {
     /// Black.
-    Black,
+    Black = 1,
     /// Blue.
-    Blue,
+    Blue = 2,
     /// Cyan.
-    Cyan,
+    Cyan = 10,
     /// Green.
-    Green,
+    Green = 3,
     /// High-intensity light black.
-    LightBlack,
+    LightBlack = 14,
     /// High-intensity light blue.
-    LightBlue,
+    LightBlue = 12,
     /// High-intensity light cyan.
-    LightCyan,
+    LightCyan = 11,
     /// High-intensity light green.
-    LightGreen,
+    LightGreen = 9,
     /// High-intensity light magenta.
-    LightMagenta,
+    LightMagenta = 13,
     /// High-intensity light red.
-    LightRed,
+    LightRed = 4,
     /// High-intensity light white.
-    LightWhite,
+    LightWhite = 0,
     /// High-intensity light yellow.
-    LightYellow,
+    LightYellow = 8,
     /// Magenta.
-    Magenta,
+    Magenta = 6,
     /// Red.
-    Red,
+    Red = 5,
     /// Reset colors to default.
-    Reset,
+    Reset = 255,
     /// White.
-    White,
+    White = 15,
     /// Yellow.
-    Yellow
+    Yellow = 7
 }
 
 macro_rules! make_modifier {
@@ -141,7 +149,6 @@ impl Style {
         self.bg = Color::Reset;
         self.modifier = Modifier::Reset;
     }
-
 }
 
 impl Default for Style {
