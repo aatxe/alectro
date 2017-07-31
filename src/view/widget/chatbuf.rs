@@ -32,7 +32,6 @@ impl ChatBuf {
         for g in graphemes {
             // Skip any characters if necessary.
             if skip > 0 {
-                let _ = chars.next();
                 skip -= 1;
                 continue;
             }
@@ -40,18 +39,22 @@ impl ChatBuf {
             if let Some(c) = chars.next() {
                 // Handle color formatting.
                 if c == '\x03' {
-                    let mut local = chars.clone();
 
-                    if let Some(fg) = local.next_color() {
+                    if let Some((fg, l)) = chars.clone().next_color() {
                         style = style.fg(fg);
-                        skip += 2;
+                        skip += l;
+                        for _ in 0..l {
+                            let _ = chars.next();
+                        }
 
-                        if let Some(bg) = match local.next() {
+                        let mut local = chars.clone();
+                        if let Some((bg, l)) = match local.next() {
                             Some(',') => local.next_color(),
                             _ => None,
                         } {
                             style = style.bg(bg);
-                            skip += 3;
+                            skip += 1 + l;
+                            chars = local;
                         }
                     } else {
                         style = style.fg(Color::Reset);
@@ -111,18 +114,21 @@ impl Widget for ChatBuf {
 
 
 trait CharsExt {
-    fn next_color(&mut self) -> Option<Color>;
+    fn next_color(&mut self) -> Option<(Color, u8)>;
 }
 
 impl<'a> CharsExt for Chars<'a> {
-    fn next_color(&mut self) -> Option<Color> {
+    fn next_color(&mut self) -> Option<(Color, u8)> {
         self.next().and_then(|c1|
             self.next().and_then(|c2| {
                 let mut buf = String::with_capacity(2);
                 buf.push(c1);
                 buf.push(c2);
-                buf.parse().ok().and_then(|n|
-                    Color::from_u8(n)
+                buf.parse().map(|s| (s, 2)).or_else(|_| {
+                    buf.pop();
+                    buf.parse().map(|s| (s, 1))
+                }).ok().and_then(|(n, l)|
+                    Color::from_u8(n).map(|n| (n, l))
                 )
             })
         )
