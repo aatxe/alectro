@@ -121,6 +121,30 @@ make_modifier! {
     Underline
 }
 
+impl Modifier {
+    pub fn toggle(&self) -> Option<Modifier> {
+        use self::Modifier::*;
+
+        Some(match *self {
+            Blink => NoBlink,
+            Bold => NoBold,
+            CrossedOut => NoCrossedOut,
+            Faint => NoFaint,
+            Invert => NoInvert,
+            Italic => NoItalic,
+            NoBlink => Blink,
+            NoBold => Bold,
+            NoCrossedOut => CrossedOut,
+            NoFaint => Faint,
+            NoInvert => Invert,
+            NoItalic => Italic,
+            NoUnderline => Underline,
+            Underline => NoUnderline,
+            Framed | Reset => return None,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Style {
     pub fg: Color,
@@ -141,6 +165,20 @@ impl Style {
 
     pub fn modifier(mut self, modifier: Modifier) -> Style {
         self.modifier = modifier;
+        self
+    }
+
+    pub fn modifier_with_toggle(mut self, modifier: Modifier) -> Style {
+        if self.modifier == modifier {
+            if let Some(opposite) = modifier.toggle() {
+                // FIXME: we should use opposite here, but it's not working?
+                self.modifier = Modifier::Reset;
+            } else {
+                self.modifier = Modifier::Reset;
+            }
+        } else {
+            self.modifier = modifier;
+        }
         self
     }
 

@@ -3,7 +3,7 @@ use std::str::Chars;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-use view::{Buffer, Color, Style, Widget};
+use view::{Buffer, Color, Modifier, Style, Widget};
 
 pub struct ChatBuf {
     buf: Buffer,
@@ -59,6 +59,17 @@ impl ChatBuf {
                     }
 
                     continue;
+                }
+
+                if let Some(modifier) = match c {
+                    '\x02' => Some(Modifier::Bold),
+                    '\x1D' => Some(Modifier::Italic),
+                    '\x1F' => Some(Modifier::Underline),
+                    '\x16' => Some(Modifier::Invert),
+                    '\x0F' => Some(Modifier::Reset),
+                    _ => None,
+                } {
+                    style = style.modifier_with_toggle(modifier);
                 }
             }
 
