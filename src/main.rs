@@ -17,10 +17,15 @@ fn main() {
     let cfg = Config {
         nickname: Some(format!("alectro")),
         server: Some(format!("irc.pdgn.co")),
-        channels: Some(vec![format!("#pdgn")]),
+        channels: Some(vec![format!("#pdgn"), format!("#ctf")]),
         use_ssl: Some(true),
         .. Default::default()
     };
+
+    for chan in &cfg.channels() {
+        ui.new_chat_buf(chan).unwrap();
+    }
+
     let irc_server = IrcServer::from_config(cfg).unwrap();
     irc_server.identify().unwrap();
 

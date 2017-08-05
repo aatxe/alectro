@@ -17,6 +17,10 @@ error_chain! {
             description("Failed to acquire lock because it was poisoned.")
             display("Failed to acquire lock {} because it was poisoned.", s)
         }
+        ChannelNotFound(chan: String) {
+            description("Failed to look up the specified channel.")
+            display("Failed to look up the specified channel ({}).", chan)
+        }
         UserQuit {
             description("The user requested to quit the program.")
             display("The user requested to quit the program.")

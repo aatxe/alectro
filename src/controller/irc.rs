@@ -20,17 +20,19 @@ impl IrcController {
 
     pub fn handle_message(&self, message: Message) -> error::Result<()> {
         match &message.command {
-            &Command::PRIVMSG(_, ref msg) => {
-                self.ui.chat_buf()?.push_line(
+            &Command::PRIVMSG(ref chan, ref msg) => {
+                self.ui.add_line_to_chat_buf(
+                    chan,
                     &match message.source_nickname() {
                         Some(nick) => format!("{}: {}", nick, msg),
                         None => format!("{}", msg),
                     },
                     None,
-                )
+                )?
             }
-            &Command::NOTICE(_, ref msg) => {
-                self.ui.chat_buf()?.push_line(
+            &Command::NOTICE(ref chan, ref msg) => {
+                self.ui.add_line_to_chat_buf(
+                    chan,
                     &match message.source_nickname() {
                         Some(nick) => format!("{}: {}", nick, msg),
                         None => format!("{}", msg),
@@ -40,19 +42,21 @@ impl IrcController {
                         bg: Color::Yellow,
                         ..Style::default()
                     }),
-                )
+                )?
             }
             &Command::JOIN(ref chan, _, _) => {
-                self.ui.chat_buf()?.push_line(
+                self.ui.add_line_to_chat_buf(
+                    chan,
                     &format!("{} joined {}.", message.source_nickname().unwrap_or("DEFAULT"), chan),
                     Some(Color::LightBlack.into()),
-                )
+                )?
             }
             &Command::PART(ref chan, _) => {
-                self.ui.chat_buf()?.push_line(
+                self.ui.add_line_to_chat_buf(
+                    &chan[..],
                     &format!("{} left {}.", message.source_nickname().unwrap_or("DEFAULT"), chan),
                     Some(Color::LightBlack.into()),
-                )
+                )?
             }
             _ => (),
         }

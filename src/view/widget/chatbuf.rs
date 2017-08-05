@@ -5,6 +5,7 @@ use unicode_width::UnicodeWidthStr;
 
 use view::{Buffer, Color, Modifier, Style, Widget};
 
+#[derive(Clone)]
 pub struct ChatBuf {
     buf: Buffer,
     starting_x: u16,

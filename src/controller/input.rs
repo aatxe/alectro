@@ -30,15 +30,25 @@ impl InputController {
                 }
                 Key::Char('\n') => {
                     let mut input = self.ui.input().unwrap();
-                    self.irc_server.send_privmsg("#pdgn", input.get_content())?;
-                    self.ui.chat_buf()?.push_line(
-                        &format!(
-                            "{}: {}",
-                            self.irc_server.config().nickname(),
-                            input.get_content()
-                        ),
-                        None,
-                    );
+                    if input.get_content().starts_with("/switch ") {
+                        let tokens: Vec<_> = input.get_content().split(" ").collect();
+                        if tokens.len() >= 2 {
+                            self.ui.switch_to(tokens[1])?;
+                        }
+                    } else {
+                        self.irc_server.send_privmsg(
+                            &*self.ui.current_buf()?,
+                            input.get_content(),
+                        )?;
+                        self.ui.add_line_to_current_chat_buf(
+                            &format!(
+                                "{}: {}",
+                                self.irc_server.config().nickname(),
+                                input.get_content()
+                            ),
+                            None,
+                        )?;
+                    }
                     input.reset();
                 }
                 Key::Char(c) => {

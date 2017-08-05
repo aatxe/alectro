@@ -1,9 +1,12 @@
+use std::collections::HashMap;
 use std::io;
 use std::io::Write;
 use std::sync::{Arc, Mutex, MutexGuard};
 
+use irc::proto::ChannelExt;
+
 use error;
-use view::Terminal;
+use view::{Style, Terminal};
 use view::widget::{ChatBuf, Input};
 
 #[derive(Clone)]
@@ -22,8 +25,28 @@ impl UI {
         self.state.terminal()
     }
 
-    pub fn chat_buf(&self) -> error::Result<MutexGuard<ChatBuf>> {
-        self.state.chat_buf()
+    pub fn new_chat_buf(&self, buf_name: &str) -> error::Result<()> {
+        self.state.new_chat_buf(buf_name)
+    }
+
+    pub fn current_buf(&self) -> error::Result<MutexGuard<String>> {
+        self.state.current_buf()
+    }
+
+    pub fn switch_to(&self, buf_name: &str) -> error::Result<()> {
+        self.state.switch_to(buf_name)
+    }
+
+    pub fn add_line_to_chat_buf(
+        &self, buf_name: &str, line: &str, style: Option<Style>
+    ) -> error::Result<()> {
+        self.state.add_line_to_chat_buf(buf_name, line, style)
+    }
+
+    pub fn add_line_to_current_chat_buf(
+        &self, line: &str, style: Option<Style>
+    ) -> error::Result<()> {
+        self.state.add_line_to_current_chat_buf(line, style)
     }
 
     pub fn input(&self) -> error::Result<MutexGuard<Input>> {
@@ -37,7 +60,8 @@ impl UI {
 
 struct InterfaceState {
     term: Mutex<Terminal>,
-    chat_buf: Mutex<ChatBuf>,
+    current_buf: Mutex<String>,
+    chat_bufs: Mutex<HashMap<String, ChatBuf>>,
     input: Mutex<Input>,
 }
 
@@ -52,9 +76,16 @@ impl InterfaceState {
             buf
         };
 
+        let chat_bufs = {
+            let mut map = HashMap::new();
+            map.insert("*default*".to_owned(), ChatBuf::from_buffer(buffer.clone()));
+            map
+        };
+
         Ok(InterfaceState {
             term: Mutex::new(term),
-            chat_buf: Mutex::new(ChatBuf::from_buffer(buffer.clone())),
+            current_buf: Mutex::new("*default*".to_owned()),
+            chat_bufs: Mutex::new(chat_bufs),
             input: Mutex::new(Input::from_buffer(buffer)),
         })
     }
@@ -63,8 +94,55 @@ impl InterfaceState {
         self.term.lock().map_err(|_| error::ErrorKind::LockPoisoned("UI::Terminal").into())
     }
 
-    fn chat_buf(&self) -> error::Result<MutexGuard<ChatBuf>> {
-        self.chat_buf.lock().map_err(|_| error::ErrorKind::LockPoisoned("UI::ChatBuf").into())
+    fn new_chat_buf(&self, buf_name: &str) -> error::Result<()> {
+        let mut chat_bufs = self.chat_bufs.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
+            e
+        })?;
+        let new_buf = chat_bufs["*default*"].clone();
+        chat_bufs.insert(buf_name.to_owned(), new_buf);
+        Ok(())
+    }
+
+    fn current_buf(&self) -> error::Result<MutexGuard<String>> {
+        self.current_buf.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::CurrentBuf").into();
+            e
+        })
+    }
+
+    fn switch_to(&self, buf_name: &str) -> error::Result<()> {
+        let mut current_buf = self.current_buf()?;
+        *current_buf = buf_name.to_owned();
+        Ok(())
+    }
+
+    fn add_line_to_chat_buf(
+        &self, buf_name: &str, line: &str, style: Option<Style>
+    ) -> error::Result<()> {
+        if buf_name.is_channel_name() {
+            self.chat_bufs.lock().map_err(|_| {
+                let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
+                e
+            })?.get_mut(buf_name).ok_or_else(|| {
+                error::ErrorKind::ChannelNotFound(buf_name.to_owned()).into()
+            }).map(|buf| buf.push_line(line, style))
+        } else {
+            self.chat_bufs.lock().map_err(|_| {
+                let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
+                e
+            })?.get_mut("*default*").ok_or_else(|| {
+                error::ErrorKind::ChannelNotFound("*default*".to_owned()).into()
+            }).map(|buf| buf.push_line(line, style))
+        }
+    }
+
+    fn add_line_to_current_chat_buf(&self, line: &str, style: Option<Style>) -> error::Result<()> {
+        let current_buf = self.current_buf.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::CurrentBuf").into();
+            e
+        })?;
+        self.add_line_to_chat_buf(&*current_buf, line, style)
     }
 
     fn input(&self) -> error::Result<MutexGuard<Input>> {
@@ -73,10 +151,17 @@ impl InterfaceState {
 
     fn draw_all(&self) -> error::Result<()> {
         let mut term = self.terminal()?;
-        let chat_buf = self.chat_buf()?;
+        let current_buf = self.current_buf()?;
+        let chat_bufs = self.chat_bufs.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
+            e
+        })?;
         let input = self.input()?;
 
-        term.render(&*chat_buf);
+        term.render(chat_bufs.get(&*current_buf).ok_or_else(|| {
+            let e: error::Error = error::ErrorKind::ChannelNotFound(current_buf.clone()).into();
+            e
+        })?);
         term.render(&*input);
         term.draw()?;
         input.draw_cursor()?;
