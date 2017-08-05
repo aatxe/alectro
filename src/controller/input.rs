@@ -30,8 +30,8 @@ impl InputController {
                 }
                 Key::Char('\n') => {
                     let mut input = self.ui.input().unwrap();
-                    if input.get_content().starts_with("/") {
-                        let tokens: Vec<_> = input.get_content().split(" ").collect();
+                    if input.get_content().starts_with('/') {
+                        let tokens: Vec<_> = input.get_content().split(' ').collect();
                         match &tokens[0][1..] {
                             "switch" => if tokens.len() >= 2 {
                                 self.ui.switch_to(tokens[1])?;

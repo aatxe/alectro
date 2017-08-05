@@ -19,8 +19,8 @@ impl IrcController {
     }
 
     pub fn handle_message(&self, message: Message) -> error::Result<()> {
-        match &message.command {
-            &Command::PRIVMSG(ref chan, ref msg) => {
+        match message.command {
+            Command::PRIVMSG(ref chan, ref msg) => {
                 self.ui.add_line_to_chat_buf(
                     chan,
                     &match message.source_nickname() {
@@ -30,7 +30,7 @@ impl IrcController {
                     None,
                 )?
             }
-            &Command::NOTICE(ref chan, ref msg) => {
+            Command::NOTICE(ref chan, ref msg) => {
                 self.ui.add_line_to_chat_buf(
                     chan,
                     &match message.source_nickname() {
@@ -44,14 +44,14 @@ impl IrcController {
                     }),
                 )?
             }
-            &Command::JOIN(ref chan, _, _) => {
+            Command::JOIN(ref chan, _, _) => {
                 self.ui.add_line_to_chat_buf(
                     chan,
                     &format!("{} joined {}.", message.source_nickname().unwrap_or("DEFAULT"), chan),
                     Some(Color::LightBlack.into()),
                 )?
             }
-            &Command::PART(ref chan, _) => {
+            Command::PART(ref chan, _) => {
                 self.ui.add_line_to_chat_buf(
                     &chan[..],
                     &format!("{} left {}.", message.source_nickname().unwrap_or("DEFAULT"), chan),
