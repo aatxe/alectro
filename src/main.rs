@@ -17,7 +17,6 @@ fn main() {
     let cfg = Config {
         nickname: Some(format!("alectro")),
         server: Some(format!("irc.pdgn.co")),
-        channels: Some(vec![format!("#pdgn"), format!("#ctf")]),
         use_ssl: Some(true),
         .. Default::default()
     };

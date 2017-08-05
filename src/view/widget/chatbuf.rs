@@ -105,6 +105,12 @@ impl ChatBuf {
         self.starting_x = 0;
         self.starting_y = y + 1;
     }
+
+    pub fn reset(&mut self) {
+        self.buf.reset();
+        self.starting_x = 0;
+        self.starting_y = 0;
+    }
 }
 
 impl Widget for ChatBuf {

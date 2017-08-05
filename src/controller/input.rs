@@ -30,10 +30,23 @@ impl InputController {
                 }
                 Key::Char('\n') => {
                     let mut input = self.ui.input().unwrap();
-                    if input.get_content().starts_with("/switch ") {
+                    if input.get_content().starts_with("/") {
                         let tokens: Vec<_> = input.get_content().split(" ").collect();
-                        if tokens.len() >= 2 {
-                            self.ui.switch_to(tokens[1])?;
+                        match &tokens[0][1..] {
+                            "switch" => if tokens.len() >= 2 {
+                                self.ui.switch_to(tokens[1])?;
+                            },
+                            "join" => if tokens.len() >= 2 {
+                                self.irc_server.send_join(tokens[1])?;
+                                self.ui.new_chat_buf(tokens[1])?;
+                                self.ui.switch_to(tokens[1])?;
+                            },
+                            "part" => if tokens.len() >= 2 {
+                                self.irc_server.send_part(tokens[1])?;
+                                self.ui.switch_to("*default*")?;
+                                // self.ui.remove_chat_buf(tokens[1])?;
+                            },
+                            _ => (),
                         }
                     } else {
                         self.irc_server.send_privmsg(

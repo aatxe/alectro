@@ -29,6 +29,10 @@ impl UI {
         self.state.new_chat_buf(buf_name)
     }
 
+    pub fn remove_chat_buf(&self, buf_name: &str) -> error::Result<()> {
+        self.state.remove_chat_buf(buf_name)
+    }
+
     pub fn current_buf(&self) -> error::Result<MutexGuard<String>> {
         self.state.current_buf()
     }
@@ -99,8 +103,18 @@ impl InterfaceState {
             let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
             e
         })?;
-        let new_buf = chat_bufs["*default*"].clone();
+        let mut new_buf = chat_bufs["*default*"].clone();
+        new_buf.reset();
         chat_bufs.insert(buf_name.to_owned(), new_buf);
+        Ok(())
+    }
+
+    fn remove_chat_buf(&self, buf_name: &str) -> error::Result<()> {
+        let mut chat_bufs = self.chat_bufs.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
+            e
+        })?;
+        let _ = chat_bufs.remove(buf_name);
         Ok(())
     }
 
