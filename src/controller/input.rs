@@ -46,6 +46,10 @@ impl InputController {
                                 self.ui.switch_to("*default*")?;
                                 // self.ui.remove_chat_buf(tokens[1])?;
                             },
+                            "quit" => {
+                                self.irc_server.send_quit("QUIT")?;
+                                bail!(error::ErrorKind::UserQuit);
+                            }
                             _ => (),
                         }
                     } else {
@@ -55,7 +59,7 @@ impl InputController {
                         )?;
                         self.ui.add_line_to_current_chat_buf(
                             &format!(
-                                "{}: {}",
+                                "<{}> {}",
                                 self.irc_server.config().nickname(),
                                 input.get_content()
                             ),
