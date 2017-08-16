@@ -54,7 +54,7 @@ impl ChatBuf {
         }
     }
 
-    pub fn push_line(&mut self, line: &str, style: Option<Style>) {
+    fn push_line(&mut self, line: &str, style: Option<Style>) {
         let graphemes = UnicodeSegmentation::graphemes(line, true);
         let mut chars = line.chars();
 

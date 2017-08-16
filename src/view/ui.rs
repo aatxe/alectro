@@ -7,7 +7,7 @@ use irc::proto::ChannelExt;
 
 use error;
 use model::Event;
-use view::{Style, Terminal};
+use view::Terminal;
 use view::widget::{ChatBuf, Input, TabLine};
 
 #[derive(Clone)]
@@ -48,18 +48,6 @@ impl UI {
 
     pub fn add_event_to_current_chat_buf(&self, event: Event) -> error::Result<()> {
         self.state.add_event_to_current_chat_buf(event)
-    }
-
-    pub fn add_line_to_chat_buf(
-        &self, buf_name: &str, line: &str, style: Option<Style>
-    ) -> error::Result<()> {
-        self.state.add_line_to_chat_buf(buf_name, line, style)
-    }
-
-    pub fn add_line_to_current_chat_buf(
-        &self, line: &str, style: Option<Style>
-    ) -> error::Result<()> {
-        self.state.add_line_to_current_chat_buf(line, style)
     }
 
     pub fn input(&self) -> error::Result<MutexGuard<Input>> {
@@ -187,35 +175,6 @@ impl InterfaceState {
             e
         })?;
         self.add_event_to_chat_buf(&*current_buf, event)
-    }
-
-
-    fn add_line_to_chat_buf(
-        &self, buf_name: &str, line: &str, style: Option<Style>
-    ) -> error::Result<()> {
-        if buf_name.is_channel_name() {
-            self.chat_bufs.lock().map_err(|_| {
-                let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
-                e
-            })?.get_mut(buf_name).ok_or_else(|| {
-                error::ErrorKind::ChannelNotFound(buf_name.to_owned()).into()
-            }).map(|buf| buf.push_line(line, style))
-        } else {
-            self.chat_bufs.lock().map_err(|_| {
-                let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
-                e
-            })?.get_mut("*default*").ok_or_else(|| {
-                error::ErrorKind::ChannelNotFound("*default*".to_owned()).into()
-            }).map(|buf| buf.push_line(line, style))
-        }
-    }
-
-    fn add_line_to_current_chat_buf(&self, line: &str, style: Option<Style>) -> error::Result<()> {
-        let current_buf = self.current_buf.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::CurrentBuf").into();
-            e
-        })?;
-        self.add_line_to_chat_buf(&*current_buf, line, style)
     }
 
     fn input(&self) -> error::Result<MutexGuard<Input>> {
