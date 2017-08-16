@@ -1,3 +1,5 @@
+use std::fmt;
+
 use termion;
 use termion::color::{Fg, Bg};
 
@@ -7,6 +9,14 @@ macro_rules! make_color {
         #[repr(u8)]
         pub enum Color {
             $(#[$attr] $variant = $value),+
+        }
+
+        impl fmt::Display for Color {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "{}", match self {
+                    $(&Color::$variant => $value),+
+                })
+            }
         }
 
         impl Color {
@@ -22,10 +32,17 @@ macro_rules! make_color {
                 }
             }
 
+            pub fn to_irc_color(self) -> String {
+                match self {
+                    Color::Reset => "\x03".to_owned(),
+                    _ => format!("\x03{}", self),
+                }
+            }
+
             pub fn from_u8(val: u8) -> Option<Color> {
                 match val {
                     $($value => Some(Color::$variant),)+
-                        _ => None
+                    _ => None
                 }
             }
         }

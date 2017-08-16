@@ -16,4 +16,5 @@ pub mod controller;
 mod error;
 pub mod input;
 pub mod model;
+mod utils;
 pub mod view;

@@ -1,6 +1,7 @@
 use irc::client::prelude::*;
 
 use error;
+use utils;
 use view::{Color, Style, UI};
 
 pub struct IrcController {
@@ -24,7 +25,10 @@ impl IrcController {
                 self.ui.add_line_to_chat_buf(
                     chan,
                     &match message.source_nickname() {
-                        Some(nick) => format!("{}: {}", nick, msg),
+                        Some(nick) => format!(
+                            "<{}{}{}> {}", utils::colorize(nick).to_irc_color(), nick,
+                            Color::Reset.to_irc_color(), msg
+                        ),
                         None => format!("{}", msg),
                     },
                     None,
@@ -34,7 +38,10 @@ impl IrcController {
                 self.ui.add_line_to_chat_buf(
                     chan,
                     &match message.source_nickname() {
-                        Some(nick) => format!("{}: {}", nick, msg),
+                        Some(nick) => format!(
+                            "<{}{}{}{}{}> {}", utils::colorize(nick).to_irc_color(), "\x02", nick,
+                            "\x02", format!("\x03{},{}", Color::LightWhite, Color::Yellow), msg
+                        ),
                         None => format!("{}", msg),
                     },
                     Some(Style {
@@ -45,16 +52,23 @@ impl IrcController {
                 )?
             }
             &Command::JOIN(ref chan, _, _) => {
+                let nick = message.source_nickname().unwrap_or("DEFAULT");
                 self.ui.add_line_to_chat_buf(
                     chan,
-                    &format!("{} joined {}.", message.source_nickname().unwrap_or("DEFAULT"), chan),
+                    &format!(
+                        "{}{}{} joined {}.", utils::colorize(nick).to_irc_color(), nick,
+                        Color::Reset.to_irc_color(), chan
+                    ),
                     Some(Color::LightBlack.into()),
                 )?
             }
             &Command::PART(ref chan, _) => {
+                let nick = message.source_nickname().unwrap_or("DEFAULT");
                 self.ui.add_line_to_chat_buf(
                     &chan[..],
-                    &format!("{} left {}.", message.source_nickname().unwrap_or("DEFAULT"), chan),
+                    &format!(
+                        "{}{}{} left {}.", utils::colorize(nick).to_irc_color(), nick,
+                        Color::Reset.to_irc_color(), chan),
                     Some(Color::LightBlack.into()),
                 )?
             }
