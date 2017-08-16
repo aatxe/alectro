@@ -2,6 +2,7 @@
 
 A textual IRC client in Rust.
 
+![alectro in action](alectro.png)
 
 ## Acknowledgements ## 
 
