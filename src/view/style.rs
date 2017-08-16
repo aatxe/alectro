@@ -139,7 +139,7 @@ make_modifier! {
 }
 
 impl Modifier {
-    pub fn toggle(&self) -> Option<Modifier> {
+    pub fn inverted(&self) -> Option<Modifier> {
         use self::Modifier::*;
 
         Some(match *self {
@@ -187,8 +187,10 @@ impl Style {
 
     pub fn modifier_with_toggle(mut self, modifier: Modifier) -> Style {
         if self.modifier == modifier {
-            if let Some(opposite) = modifier.toggle() {
-                // FIXME: we should use opposite here, but it's not working?
+            if let Some(inverted) = modifier.inverted() {
+                // FIXME: We want to use inverted here, but most terminals don't support it. To get
+                // around this, we will need to add support in the renderer for translating inverted
+                // modifiers into a reset followed by the restoration of any additional modifiers.
                 self.modifier = Modifier::Reset;
             } else {
                 self.modifier = Modifier::Reset;
