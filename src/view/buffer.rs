@@ -149,6 +149,14 @@ impl Buffer {
         self.bound = bound;
     }
 
+    pub fn move_x(&mut self, x: u16) {
+        self.bound.x = x;
+    }
+
+    pub fn move_y(&mut self, y: u16) {
+        self.bound.y = y;
+    }
+
     pub fn drop_top_line(&mut self) {
         for _ in 0..self.bound.width {
             self.buf.pop_front();

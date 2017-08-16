@@ -46,7 +46,11 @@ impl TabLine {
         }).map(|(i, _)| i);
         match idx {
             Some(idx) => {
+                if idx < self.curr {
+                    self.curr -= 1;
+                }
                 self.tabs.remove(idx);
+                self.redraw();
                 Ok(())
             }
             None => bail!(error::ErrorKind::TabNotFound(content.to_owned())),
@@ -74,9 +78,11 @@ impl TabLine {
             self.tabs[original - 1].redraw();
             self.tabs[original - 1].draw(&mut self.buf);
         }
-        self.tabs[original].highlighted = false;
-        self.tabs[original].redraw();
-        self.tabs[original].draw(&mut self.buf);
+        if original != self.curr {
+            self.tabs[original].highlighted = false;
+            self.tabs[original].redraw();
+            self.tabs[original].draw(&mut self.buf);
+        }
         self.highlight_precursor();
         Ok(())
     }
@@ -95,8 +101,10 @@ impl TabLine {
                 tab.before_highlighted = false;
                 tab.highlighted = false;
             }
+            tab.buf.move_x(self.cursor);
             tab.redraw();
             tab.draw(&mut self.buf);
+            self.cursor += tab.content.len() as u16 + EXTRA_SIZE;
         }
     }
 

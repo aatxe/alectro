@@ -1,4 +1,5 @@
 use irc::client::prelude::*;
+use irc::proto::ChannelExt;
 
 use error;
 use model::Event;
@@ -22,24 +23,32 @@ impl IrcController {
     pub fn handle_message(&self, message: Message) -> error::Result<()> {
         match &message.command {
             &Command::PRIVMSG(ref chan, ref msg) => {
-                self.ui.add_event_to_chat_buf(
-                    chan, Event::message(message.source_nickname(), chan, msg)
-                )?
+                if !chan.is_channel_name() || self.ui.has_chat_buf(chan)? {
+                    self.ui.add_event_to_chat_buf(
+                        chan, Event::message(message.source_nickname(), chan, msg)
+                    )?
+                }
             }
             &Command::NOTICE(ref chan, ref msg) => {
-                self.ui.add_event_to_chat_buf(
-                    chan, Event::notice(message.source_nickname(), chan, msg)
-                )?
+                if !chan.is_channel_name() || self.ui.has_chat_buf(chan)? {
+                    self.ui.add_event_to_chat_buf(
+                        chan, Event::notice(message.source_nickname(), chan, msg)
+                    )?
+                }
             }
             &Command::JOIN(ref chan, _, _) => {
-                self.ui.add_event_to_chat_buf(
-                    chan, Event::joined(message.source_nickname(), chan)
-                )?
+                if !chan.is_channel_name() || self.ui.has_chat_buf(chan)? {
+                    self.ui.add_event_to_chat_buf(
+                        chan, Event::joined(message.source_nickname(), chan)
+                    )?
+                }
             }
             &Command::PART(ref chan, _) => {
-                self.ui.add_event_to_chat_buf(
-                    chan, Event::parted(message.source_nickname(), chan)
-                )?
+                if !chan.is_channel_name() || self.ui.has_chat_buf(chan)? {
+                    self.ui.add_event_to_chat_buf(
+                        chan, Event::parted(message.source_nickname(), chan)
+                    )?
+                }
             }
             _ => (),
         }

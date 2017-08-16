@@ -44,8 +44,7 @@ impl InputController {
                             },
                             "part" => if tokens.len() >= 2 {
                                 self.irc_server.send_part(tokens[1])?;
-                                self.ui.switch_to("*default*")?;
-                                // self.ui.remove_chat_buf(tokens[1])?;
+                                self.ui.remove_chat_buf(tokens[1])?;
                             },
                             "quit" => {
                                 self.irc_server.send_quit("QUIT")?;

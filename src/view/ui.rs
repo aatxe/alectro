@@ -26,6 +26,10 @@ impl UI {
         self.state.terminal()
     }
 
+    pub fn has_chat_buf(&self, buf_name: &str) -> error::Result<bool> {
+        self.state.has_chat_buf(buf_name)
+    }
+
     pub fn new_chat_buf(&self, buf_name: &str) -> error::Result<()> {
         self.state.new_chat_buf(buf_name)
     }
@@ -103,6 +107,14 @@ impl InterfaceState {
         self.term.lock().map_err(|_| error::ErrorKind::LockPoisoned("UI::Terminal").into())
     }
 
+    fn has_chat_buf(&self, buf_name: &str) -> error::Result<bool> {
+        let chat_bufs = self.chat_bufs.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
+            e
+        })?;
+        Ok(chat_bufs.contains_key(buf_name))
+    }
+
     fn new_chat_buf(&self, buf_name: &str) -> error::Result<()> {
         let mut chat_bufs = self.chat_bufs.lock().map_err(|_| {
             let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
@@ -120,15 +132,20 @@ impl InterfaceState {
     }
 
     fn remove_chat_buf(&self, buf_name: &str) -> error::Result<()> {
+        let mut current_buf = self.current_buf()?;
+        let mut tabline = self.tabline.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::TabLine").into();
+            e
+        })?;
+        if &*current_buf == buf_name {
+            *current_buf = "*default*".to_owned();
+            tabline.switch_to("*default*")?;
+        }
         let mut chat_bufs = self.chat_bufs.lock().map_err(|_| {
             let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
             e
         })?;
         let _ = chat_bufs.remove(buf_name);
-        let mut tabline = self.tabline.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::TabLine").into();
-            e
-        })?;
         tabline.remove_tab(buf_name)?;
         Ok(())
     }
