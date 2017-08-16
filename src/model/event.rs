@@ -28,14 +28,7 @@ impl Event {
     }
 
     pub fn style(&self) -> Option<Style> {
-        match self {
-            &Event::Notice(_, _, _) => Some(Style {
-                fg: Color::LightWhite,
-                bg: Color::Yellow,
-                ..Style::default()
-            }),
-            _ => None,
-        }
+        None
     }
 }
 
@@ -45,17 +38,20 @@ impl ToString for Event {
             &Event::PrivMessage(ref sender, _, ref message) => {
                 let nick = sender.as_ref().map(|s| &s[..]).unwrap_or("");
                 format!(
-                    "<{}{}{}> {}", utils::colorize(nick).to_irc_color(), nick,
-                    Color::Reset.to_irc_color(), message
+                    "\x03{}[{}{}\x03{}]{} {}", Color::Magenta, utils::colorize(nick).to_irc_color(),
+                    nick, Color::Magenta, Color::Reset.to_irc_color(), message
                 )
             }
             &Event::Notice(Some(ref sender), _, ref message) => {
                 format!(
-                    "<{}{}{}{}{}> {}", utils::colorize(sender).to_irc_color(), "\x02", sender,
-                    "\x02", format!("\x03{},{}", Color::LightWhite, Color::Yellow), message 
+                    "\x03{}*[{}\x02{}\x02\x03{}]*{} {}", Color::Magenta,
+                    utils::colorize(sender).to_irc_color(), sender, Color::Magenta,
+                    Color::Reset.to_irc_color(), message
                 )
             }
-            &Event::Notice(None, _, ref message) => format!("{}", message),
+            &Event::Notice(None, _, ref message) => {
+                format!("\x03{}*{} {}", Color::Magenta, Color::Reset.to_irc_color(), message)
+            }
             &Event::JoinPart(Some(ref sender), _, true) => {
                 format!(
                     "\x03{}+{}{}{}", Color::Green, utils::colorize(sender).to_irc_color(), sender,
