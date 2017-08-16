@@ -21,6 +21,10 @@ error_chain! {
             description("Failed to look up the specified channel.")
             display("Failed to look up the specified channel ({}).", chan)
         }
+        TabNotFound(title: String) {
+            description("Failed to find up the specified tab.")
+            display("Failed to find up the specified tab ({}).", title)
+        }
         UserQuit {
             description("The user requested to quit the program.")
             display("The user requested to quit the program.")

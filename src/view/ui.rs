@@ -7,7 +7,7 @@ use irc::proto::ChannelExt;
 
 use error;
 use view::{Style, Terminal};
-use view::widget::{ChatBuf, Input};
+use view::widget::{ChatBuf, Input, TabLine};
 
 #[derive(Clone)]
 pub struct UI {
@@ -67,6 +67,7 @@ struct InterfaceState {
     current_buf: Mutex<String>,
     chat_bufs: Mutex<HashMap<String, ChatBuf>>,
     input: Mutex<Input>,
+    tabline: Mutex<TabLine>,
 }
 
 impl InterfaceState {
@@ -86,11 +87,18 @@ impl InterfaceState {
             map
         };
 
+        let tabline = {
+            let mut tabline = TabLine::from_buffer(&buffer);
+            tabline.add_tab("*default*", true);
+            tabline
+        };
+
         Ok(InterfaceState {
             term: Mutex::new(term),
             current_buf: Mutex::new("*default*".to_owned()),
             chat_bufs: Mutex::new(chat_bufs),
-            input: Mutex::new(Input::from_buffer(buffer)),
+            input: Mutex::new(Input::from_buffer(&buffer)),
+            tabline: Mutex::new(tabline),
         })
     }
 
@@ -103,9 +111,14 @@ impl InterfaceState {
             let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
             e
         })?;
+        let mut tabline = self.tabline.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::TabLine").into();
+            e
+        })?;
         let mut new_buf = chat_bufs["*default*"].clone();
         new_buf.reset();
         chat_bufs.insert(buf_name.to_owned(), new_buf);
+        tabline.add_tab(buf_name, false);
         Ok(())
     }
 
@@ -115,6 +128,11 @@ impl InterfaceState {
             e
         })?;
         let _ = chat_bufs.remove(buf_name);
+        let mut tabline = self.tabline.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::TabLine").into();
+            e
+        })?;
+        tabline.remove_tab(buf_name)?;
         Ok(())
     }
 
@@ -128,6 +146,11 @@ impl InterfaceState {
     fn switch_to(&self, buf_name: &str) -> error::Result<()> {
         let mut current_buf = self.current_buf()?;
         *current_buf = buf_name.to_owned();
+        let mut tabline = self.tabline.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::TabLine").into();
+            e
+        })?;
+        tabline.switch_to(buf_name)?;
         Ok(())
     }
 
@@ -170,12 +193,17 @@ impl InterfaceState {
             let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
             e
         })?;
+        let tabline = self.tabline.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::TabLine").into();
+            e
+        })?;
         let input = self.input()?;
 
         term.render(chat_bufs.get(&*current_buf).ok_or_else(|| {
             let e: error::Error = error::ErrorKind::ChannelNotFound(current_buf.clone()).into();
             e
         })?);
+        term.render(&*tabline);
         term.render(&*input);
         term.draw()?;
         input.draw_cursor()?;

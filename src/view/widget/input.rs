@@ -23,7 +23,7 @@ impl Input {
         }
     }
 
-    pub fn from_buffer(buf: Buffer) -> Input {
+    pub fn from_buffer(buf: &Buffer) -> Input {
         Input::new(buf.bound().x, buf.bound().y + buf.bound().height + 1, buf.bound().width)
     }
 

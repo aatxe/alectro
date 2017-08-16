@@ -175,19 +175,19 @@ impl Buffer {
         self.buf.resize(bound.area() as usize, Cell::default());
 
         // Move original buf contents to the appropriate cell.
-        let offset_x = self.bound.x - bound.x;
-        let offset_y = self.bound.y - bound.y;
-        let size = self.bound.area() as usize;
-        for i in (0..size).rev() {
-            let (x, y) = self.pos_of(i);
-            let new_idx = ((y + offset_y) * bound.width + (x + offset_x)) as usize;
+        // let offset_x = self.bound.x - bound.x;
+        // let offset_y = self.bound.y - bound.y;
+        // let size = self.bound.area() as usize;
+        // for i in (0..size).rev() {
+        //     let (x, y) = self.pos_of(i);
+        //     let new_idx = ((y + offset_y) * bound.width + (x + offset_x)) as usize;
 
-            // Move the contents around if necessary.
-            if i != new_idx {
-                self.buf[i] = Cell::default();
-                self.buf.swap(new_idx, i);
-            }
-        }
+        //     // Move the contents around if necessary.
+        //     if i != new_idx {
+        //         self.buf[i] = Cell::default();
+        //         self.buf.swap(new_idx, i);
+        //     }
+        // }
 
         // Push contents of the other buffer into this one, erasing any already present cells.
         let size = other.bound.area() as usize;
