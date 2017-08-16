@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use irc::proto::ChannelExt;
 
 use error;
+use model::Event;
 use view::{Style, Terminal};
 use view::widget::{ChatBuf, Input, TabLine};
 
@@ -39,6 +40,14 @@ impl UI {
 
     pub fn switch_to(&self, buf_name: &str) -> error::Result<()> {
         self.state.switch_to(buf_name)
+    }
+
+    pub fn add_event_to_chat_buf(&self, buf_name: &str, event: Event) -> error::Result<()> {
+        self.state.add_event_to_chat_buf(buf_name, event)
+    }
+
+    pub fn add_event_to_current_chat_buf(&self, event: Event) -> error::Result<()> {
+        self.state.add_event_to_current_chat_buf(event)
     }
 
     pub fn add_line_to_chat_buf(
@@ -153,6 +162,33 @@ impl InterfaceState {
         tabline.switch_to(buf_name)?;
         Ok(())
     }
+
+    fn add_event_to_chat_buf(&self, buf_name: &str, event: Event) -> error::Result<()> {
+        if buf_name.is_channel_name() {
+            self.chat_bufs.lock().map_err(|_| {
+                let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
+                e
+            })?.get_mut(buf_name).ok_or_else(|| {
+                error::ErrorKind::ChannelNotFound(buf_name.to_owned()).into()
+            }).map(|buf| buf.push_event(&event))
+        } else {
+            self.chat_bufs.lock().map_err(|_| {
+                let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
+                e
+            })?.get_mut("*default*").ok_or_else(|| {
+                error::ErrorKind::ChannelNotFound("*default*".to_owned()).into()
+            }).map(|buf| buf.push_event(&event))
+        }
+    }
+
+    fn add_event_to_current_chat_buf(&self, event: Event) -> error::Result<()> {
+        let current_buf = self.current_buf.lock().map_err(|_| {
+            let e: error::Error = error::ErrorKind::LockPoisoned("UI::CurrentBuf").into();
+            e
+        })?;
+        self.add_event_to_chat_buf(&*current_buf, event)
+    }
+
 
     fn add_line_to_chat_buf(
         &self, buf_name: &str, line: &str, style: Option<Style>

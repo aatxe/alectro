@@ -3,6 +3,8 @@ use std::str::Chars;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
+use model;
+use model::Event;
 use view::{Buffer, Color, Modifier, Style, Widget};
 
 #[derive(Clone)]
@@ -19,6 +21,17 @@ impl ChatBuf {
             starting_x: 0,
             starting_y: 0,
         }
+    }
+
+    pub fn redraw_from_model(&mut self, model: model::ChatBuf) {
+        self.reset();
+        for event in &model {
+            self.push_event(event)
+        }
+    }
+
+    pub fn push_event(&mut self, event: &Event) {
+        self.push_line(&event.to_string(), event.style())
     }
 
     pub fn push_line(&mut self, line: &str, style: Option<Style>) {

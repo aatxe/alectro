@@ -2,8 +2,8 @@ use irc::client::prelude::*;
 use termion::event::{Event, Key};
 
 use error;
-use utils;
-use view::{Color, UI};
+use model;
+use view::UI;
 
 pub struct InputController {
     irc_server: IrcServer,
@@ -54,20 +54,12 @@ impl InputController {
                             _ => (),
                         }
                     } else {
-                        self.irc_server.send_privmsg(
-                            &*self.ui.current_buf()?,
-                            input.get_content(),
-                        )?;
+                        let chan = &*self.ui.current_buf()?.to_owned();
+                        self.irc_server.send_privmsg(chan, input.get_content())?;
+
                         let nick = self.irc_server.config().nickname();
-                        self.ui.add_line_to_current_chat_buf(
-                            &format!(
-                                "<{}{}{}> {}",
-                                utils::colorize(nick).to_irc_color(),
-                                nick,
-                                Color::Reset.to_irc_color(),
-                                input.get_content(),
-                            ),
-                            None,
+                        self.ui.add_event_to_current_chat_buf(
+                            model::Event::message(Some(nick), chan, input.get_content())
                         )?;
                     }
                     input.reset();
