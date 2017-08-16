@@ -57,7 +57,7 @@ impl IrcController {
                     chan,
                     &format!(
                         "{}{}{} joined {}.", utils::colorize(nick).to_irc_color(), nick,
-                        Color::Reset.to_irc_color(), chan
+                        Color::LightBlack.to_irc_color(), chan
                     ),
                     Some(Color::LightBlack.into()),
                 )?
@@ -68,7 +68,7 @@ impl IrcController {
                     &chan[..],
                     &format!(
                         "{}{}{} left {}.", utils::colorize(nick).to_irc_color(), nick,
-                        Color::Reset.to_irc_color(), chan),
+                        Color::LightBlack.to_irc_color(), chan),
                     Some(Color::LightBlack.into()),
                 )?
             }
