@@ -31,7 +31,27 @@ impl ChatBuf {
     }
 
     pub fn push_event(&mut self, event: &Event) {
-        self.push_line(&event.to_string(), event.style())
+        match event {
+            &Event::PrivMessage(_, _, _) | &Event::Notice(_, _, _) => {
+                if self.starting_x != 0 {
+                    self.starting_x = 0;
+                    self.starting_y += 1;
+                }
+            }
+            _ => (),
+        }
+
+        self.push_line(&event.to_string(), event.style());
+
+        match event {
+            &Event::JoinPart(_, _, _) => {
+                self.starting_x += 1;
+            }
+            _ => {
+                self.starting_x = 0;
+                self.starting_y += 1;
+            }
+        }
     }
 
     pub fn push_line(&mut self, line: &str, style: Option<Style>) {
@@ -115,8 +135,8 @@ impl ChatBuf {
             x += g.width() as u16;
         }
 
-        self.starting_x = 0;
-        self.starting_y = y + 1;
+        self.starting_x = x;
+        self.starting_y = y;
     }
 
     pub fn reset(&mut self) {
