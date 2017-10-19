@@ -4,6 +4,8 @@ extern crate irc;
 extern crate termion;
 extern crate tokio_core;
 
+use std::env;
+
 use alectro::controller::{InputController, IrcController};
 use alectro::input::AsyncKeyInput;
 use alectro::view::UI;
@@ -14,11 +16,20 @@ fn main() {
     let ui = UI::new().unwrap();
     let mut reactor = Core::new().unwrap();
 
-    let cfg = Config {
+    let default_cfg = Config {
         nickname: Some(format!("alectro")),
         server: Some(format!("irc.pdgn.co")),
         use_ssl: Some(true),
         .. Default::default()
+    };
+
+    let cfg = match env::home_dir() {
+        Some(mut path) => {
+            path.push(".alectro");
+            path.set_extension("toml");
+            Config::load(path).unwrap_or(default_cfg)
+        },
+        None => default_cfg,
     };
 
     for chan in &cfg.channels() {
