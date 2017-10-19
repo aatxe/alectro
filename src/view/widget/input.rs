@@ -56,6 +56,11 @@ impl Input {
     pub fn backspace(&mut self) {
         self.before_edit();
 
+        // Prevent crashing with too many backspaces.
+        if self.cursor == 0 {
+            return;
+        }
+
         // Move the cursor back one spot.
         self.cursor -= 1;
 
