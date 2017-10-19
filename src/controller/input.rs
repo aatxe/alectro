@@ -56,7 +56,7 @@ impl InputController {
                         let chan = &*self.ui.current_buf()?.to_owned();
                         self.irc_server.send_privmsg(chan, input.get_content())?;
 
-                        let nick = self.irc_server.config().nickname();
+                        let nick = self.irc_server.current_nickname();
                         self.ui.add_event_to_current_chat_buf(
                             model::Event::message(Some(nick), chan, input.get_content())
                         )?;
