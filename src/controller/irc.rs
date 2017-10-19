@@ -1,3 +1,4 @@
+use irc::client::data::User;
 use irc::client::prelude::*;
 use irc::proto::ChannelExt;
 
@@ -48,6 +49,25 @@ impl IrcController {
                     self.ui.add_event_to_chat_buf(
                         chan, Event::parted(message.source_nickname(), chan)
                     )?
+                }
+            }
+            &Command::Response(Response::RPL_NAMREPLY, ref args, ref suffix) => {
+                if let Some(chan) = args.iter().find(|s| s.is_channel_name()) {
+                    if let Some(users) = suffix.as_ref().map(|s| s.split(" ")) {
+                        for user in users {
+                            // Skip empty strings.
+                            if user.is_empty() {
+                                continue;
+                            }
+
+                            // Parses off the access level information.
+                            let user = User::new(user);
+                            let nickname = user.get_nickname();
+                            self.ui.add_event_to_chat_buf(
+                                chan, Event::joined(Some(nickname), chan)
+                            )?
+                        }
+                    }
                 }
             }
             _ => (),
