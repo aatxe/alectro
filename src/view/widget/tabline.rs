@@ -53,7 +53,7 @@ impl TabLine {
                 self.redraw();
                 Ok(())
             }
-            None => bail!(error::ErrorKind::TabNotFound(content.to_owned())),
+            None => Err(error::Error::TabNotFound { tab: content.to_owned() }),
         }
     }
 
@@ -70,7 +70,7 @@ impl TabLine {
                     tab.redraw();
                     tab.draw(&mut self.buf);
                 }
-                None => bail!(error::ErrorKind::TabNotFound(content.to_owned())),
+                None => return Err(error::Error::TabNotFound { tab: content.to_owned() }),
             }
         }
         if original != 0 {

@@ -32,14 +32,14 @@ impl AsyncKeyInput {
             for res_key in input {
                 match res_key {
                     Ok(key) => {
-                        if let Err(e) = tx.send(key) {
-                            bail!(e)
+                        if let Err(e) = tx.unbounded_send(key) {
+                            return Err(e.into())
                         }
                     }
                     Err(e) => {
                         println!("{:?}", e);
                         if let Err(e) = tx.close() {
-                            bail!(e)
+                            return Err(e.into())
                         }
                         closed_handle.store(true, Ordering::SeqCst);
                         break;
@@ -67,7 +67,7 @@ impl Stream for AsyncKeyInput {
             match self.handle.take().expect("AsyncKeyInput was missing its thread handle.").join() {
                 Ok(Ok(())) => Ok(Async::Ready(None)),
                 Ok(Err(e)) => Err(e),
-                Err(e) => Err(error::ErrorKind::ThreadJoinErr(format!("{:?}", e)).into()),
+                Err(e) => Err(error::Error::ThreadJoinErr { err: format!("{:?}", e) }),
             }
         } else {
             self.rx.poll().map_err(|()| unreachable!())

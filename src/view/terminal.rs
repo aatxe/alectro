@@ -80,7 +80,7 @@ impl Terminal {
             }
         }
 
-        /// Write out the computed buffer.
+        // Write out the computed buffer.
         write!(
             self.stdout,
             "{}{}{}{}",

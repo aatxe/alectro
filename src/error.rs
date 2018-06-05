@@ -1,33 +1,69 @@
-error_chain! {
-    links {
-        Irc(::irc::error::Error, ::irc::error::ErrorKind);
-    }
+use std::io::Error as IoError;
 
-    foreign_links {
-        SendKey(::futures::sync::mpsc::SendError<::termion::event::Event>);
-        Io(::std::io::Error);
-    }
+use futures::sync::mpsc::SendError;
+use irc::error::IrcError;
+use termion::event::Event;
 
-    errors {
-        ThreadJoinErr(e: String) {
-            description("Attempted to join on panicked thread.")
-            display("Attempted to join on panicked thread. Thread panicked with:\n{}", e)
-        }
-        LockPoisoned(s: &'static str) {
-            description("Failed to acquire lock because it was poisoned.")
-            display("Failed to acquire lock {} because it was poisoned.", s)
-        }
-        ChannelNotFound(chan: String) {
-            description("Failed to look up the specified channel.")
-            display("Failed to look up the specified channel ({}).", chan)
-        }
-        TabNotFound(title: String) {
-            description("Failed to find up the specified tab.")
-            display("Failed to find up the specified tab ({}).", title)
-        }
-        UserQuit {
-            description("The user requested to quit the program.")
-            display("The user requested to quit the program.")
+pub type Result<T> = ::std::result::Result<T, Error>;
+
+#[derive(Debug, Fail)]
+pub enum Error {
+    #[fail(display = "an io error occurred")]
+    Io(#[cause] IoError),
+
+    #[fail(display = "failed to send keypress event")]
+    SendKey(#[cause] SendError<Event>),
+
+    #[fail(display = "irc error")]
+    Irc(#[cause] IrcError),
+
+    #[fail(display = "attempted to join on panicked thread. thread panicked with:\n{}", err)]
+    ThreadJoinErr {
+        err: String,
+    },
+
+    #[fail(display = "failed to acquire poisoned lock: {}", lock)]
+    LockPoisoned {
+        lock: &'static str,
+    },
+
+    #[fail(display = "failed to look up the specified channel: {}", chan)]
+    ChannelNotFound {
+        chan: String,
+    },
+
+    #[fail(display = "failed to find the specified tab: {}", tab)]
+    TabNotFound {
+        tab: String,
+    },
+
+    #[fail(display = "the user initiated a quit command")]
+    UserQuit,
+}
+
+impl From<IoError> for Error {
+    fn from(e: IoError) -> Error {
+        Error::Io(e)
+    }
+}
+
+impl From<SendError<Event>> for Error {
+    fn from(e: SendError<Event>) -> Error {
+        Error::SendKey(e)
+    }
+}
+
+impl From<IrcError> for Error {
+    fn from(e: IrcError) -> Error {
+        Error::Irc(e)
+    }
+}
+
+impl From<Error> for IrcError {
+    fn from(error: Error) -> IrcError {
+        match error {
+            Error::Irc(e) => e,
+            _ => IrcError::Custom { inner: error.into() },
         }
     }
 }

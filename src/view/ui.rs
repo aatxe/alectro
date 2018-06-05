@@ -104,25 +104,22 @@ impl InterfaceState {
     }
 
     fn terminal(&self) -> error::Result<MutexGuard<Terminal>> {
-        self.term.lock().map_err(|_| error::ErrorKind::LockPoisoned("UI::Terminal").into())
+        self.term.lock().map_err(|_| error::Error::LockPoisoned { lock: "UI::Terminal" })
     }
 
     fn has_chat_buf(&self, buf_name: &str) -> error::Result<bool> {
         let chat_bufs = self.chat_bufs.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
-            e
+            error::Error::LockPoisoned { lock: "UI::ChatBufs" }
         })?;
         Ok(chat_bufs.contains_key(buf_name))
     }
 
     fn new_chat_buf(&self, buf_name: &str) -> error::Result<()> {
         let mut chat_bufs = self.chat_bufs.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
-            e
+            error::Error::LockPoisoned { lock: "UI::ChatBufs" }
         })?;
         let mut tabline = self.tabline.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::TabLine").into();
-            e
+            error::Error::LockPoisoned { lock: "UI::TabLine" }
         })?;
         let mut new_buf = chat_bufs["*default*"].clone();
         new_buf.reset();
@@ -134,16 +131,14 @@ impl InterfaceState {
     fn remove_chat_buf(&self, buf_name: &str) -> error::Result<()> {
         let mut current_buf = self.current_buf()?;
         let mut tabline = self.tabline.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::TabLine").into();
-            e
+            error::Error::LockPoisoned { lock: "UI::TabLine" }
         })?;
         if &*current_buf == buf_name {
             *current_buf = "*default*".to_owned();
             tabline.switch_to("*default*")?;
         }
         let mut chat_bufs = self.chat_bufs.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
-            e
+            error::Error::LockPoisoned { lock: "UI::ChatBufs" }
         })?;
         let _ = chat_bufs.remove(buf_name);
         tabline.remove_tab(buf_name)?;
@@ -152,8 +147,7 @@ impl InterfaceState {
 
     fn current_buf(&self) -> error::Result<MutexGuard<String>> {
         self.current_buf.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::CurrentBuf").into();
-            e
+            error::Error::LockPoisoned { lock: "UI::CurrentBuf" }
         })
     }
 
@@ -161,8 +155,7 @@ impl InterfaceState {
         let mut current_buf = self.current_buf()?;
         *current_buf = buf_name.to_owned();
         let mut tabline = self.tabline.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::TabLine").into();
-            e
+            error::Error::LockPoisoned { lock: "UI::TabLine" }
         })?;
         tabline.switch_to(buf_name)?;
         Ok(())
@@ -171,49 +164,43 @@ impl InterfaceState {
     fn add_event_to_chat_buf(&self, buf_name: &str, event: Event) -> error::Result<()> {
         if buf_name.is_channel_name() {
             self.chat_bufs.lock().map_err(|_| {
-                let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
-                e
+                error::Error::LockPoisoned { lock: "UI::ChatBufs" }
             })?.get_mut(buf_name).ok_or_else(|| {
-                error::ErrorKind::ChannelNotFound(buf_name.to_owned()).into()
+                error::Error::ChannelNotFound { chan: buf_name.to_owned() }
             }).map(|buf| buf.push_event(&event))
         } else {
             self.chat_bufs.lock().map_err(|_| {
-                let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
-                e
+                error::Error::LockPoisoned { lock: "UI::ChatBufs" }
             })?.get_mut("*default*").ok_or_else(|| {
-                error::ErrorKind::ChannelNotFound("*default*".to_owned()).into()
+                error::Error::ChannelNotFound { chan: "*default*".to_owned() }
             }).map(|buf| buf.push_event(&event))
         }
     }
 
     fn add_event_to_current_chat_buf(&self, event: Event) -> error::Result<()> {
         let current_buf = self.current_buf.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::CurrentBuf").into();
-            e
+            error::Error::LockPoisoned { lock: "UI::CurrentBuf" }
         })?;
         self.add_event_to_chat_buf(&*current_buf, event)
     }
 
     fn input(&self) -> error::Result<MutexGuard<Input>> {
-        self.input.lock().map_err(|_| error::ErrorKind::LockPoisoned("UI::Input").into())
+        self.input.lock().map_err(|_| error::Error::LockPoisoned { lock: "UI::TabLine" })
     }
 
     fn draw_all(&self) -> error::Result<()> {
         let mut term = self.terminal()?;
         let current_buf = self.current_buf()?;
         let chat_bufs = self.chat_bufs.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::ChatBufs").into();
-            e
+            error::Error::LockPoisoned { lock: "UI::ChatBufs" }
         })?;
         let tabline = self.tabline.lock().map_err(|_| {
-            let e: error::Error = error::ErrorKind::LockPoisoned("UI::TabLine").into();
-            e
+            error::Error::LockPoisoned { lock: "UI::TabLine" }
         })?;
         let input = self.input()?;
 
         term.render(chat_bufs.get(&*current_buf).ok_or_else(|| {
-            let e: error::Error = error::ErrorKind::ChannelNotFound(current_buf.clone()).into();
-            e
+            error::Error::ChannelNotFound { chan: current_buf.clone() }
         })?);
         term.render(&*tabline);
         term.render(&*input);

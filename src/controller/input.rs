@@ -6,14 +6,14 @@ use model;
 use view::UI;
 
 pub struct InputController {
-    irc_server: IrcServer,
+    client: IrcClient,
     ui: UI,
 }
 
 impl InputController {
-    pub fn new(irc_server: IrcServer, ui: UI) -> InputController {
+    pub fn new(client: IrcClient, ui: UI) -> InputController {
         InputController {
-            irc_server: irc_server,
+            client: client,
             ui: ui,
         }
     }
@@ -26,8 +26,8 @@ impl InputController {
         if let Event::Key(key) = event {
             match key {
                 Key::Ctrl('c') | Key::Ctrl('d') => {
-                    self.irc_server.send_quit("QUIT")?;
-                    bail!(error::ErrorKind::UserQuit);
+                    self.client.send_quit("QUIT")?;
+                    return Err(error::Error::UserQuit);
                 }
                 Key::Char('\n') => {
                     let mut input = self.ui.input().unwrap();
@@ -38,27 +38,27 @@ impl InputController {
                                 self.ui.switch_to(tokens[1])?;
                             },
                             "join" => if tokens.len() >= 2 {
-                                self.irc_server.send_join(tokens[1])?;
+                                self.client.send_join(tokens[1])?;
                                 self.ui.new_chat_buf(tokens[1])?;
                                 self.ui.switch_to(tokens[1])?;
                             },
                             "part" => if tokens.len() >= 2 {
-                                self.irc_server.send_part(tokens[1])?;
+                                self.client.send_part(tokens[1])?;
                                 self.ui.remove_chat_buf(tokens[1])?;
                             },
                             "quit" => {
-                                self.irc_server.send_quit("QUIT")?;
-                                bail!(error::ErrorKind::UserQuit);
+                                self.client.send_quit("QUIT")?;
+                                return Err(error::Error::UserQuit);
                             }
                             _ => (),
                         }
                     } else {
                         let chan = &*self.ui.current_buf()?.to_owned();
-                        self.irc_server.send_privmsg(chan, input.get_content())?;
+                        self.client.send_privmsg(chan, input.get_content())?;
 
-                        let nick = self.irc_server.current_nickname();
+                        let nick = self.client.current_nickname();
                         self.ui.add_event_to_current_chat_buf(
-                            model::Event::message(Some(nick), chan, input.get_content())
+                            model::Event::message(Some(&nick), chan, input.get_content())
                         )?;
                     }
                     input.reset();
